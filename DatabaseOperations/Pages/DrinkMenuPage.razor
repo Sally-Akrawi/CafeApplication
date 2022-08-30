@@ -1,0 +1,299 @@
+﻿@page "/Drink"
+@inject IDataService DrinkType
+
+<PageTitle>Drinks Menu</PageTitle>
+<h2 class="text-center mt-3 mb-5" style="font-family:'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif; color:darkblue"><b>Drinks Menu</b></h2>
+
+
+@if (updDrink == true)
+{
+
+	<div class="alert alert-success alert-dismissible fade show" role="alert">
+		@message
+		<button type="button" class="btn-close" data-bs-dismiss="alert" @onclick="CloseUpdateWarning" aria-label="Close"></button>
+	</div>
+}
+
+@if (warning == true)
+{
+
+	<div class="alert alert-danger alert-dismissible fade show" role="alert">
+		@warningMessage
+		<button type="button" class="btn-close" data-bs-dismiss="alert" @onclick="CloseErrorWarning" aria-label="Close"></button>
+	</div>
+}
+
+@if (addDrink == true)
+{
+
+	<div class="alert alert-success alert-dismissible fade show" role="alert">
+		@message
+		<button type="button" class="btn-close" data-bs-dismiss="alert" @onclick="CloseAddWarning" aria-label="Close"></button>
+	</div>
+}
+
+@if (delDrink == true)
+{
+
+	<div class="alert alert-primary alert-dismissible fade show" role="alert">
+		Drink has been deleted
+		<button type="button" class="btn-close" data-bs-dismiss="alert" @onclick="CloseDeleteWarning" aria-label="Close"></button>
+	</div>
+}
+
+<div class="container-fluid" style="width: 80rem;">
+	<table class="table table-bordered table-hover table-striped mb-5">
+		<thead>
+			<tr>
+				@foreach (var h in Headings)
+				{
+					<th scope="col"><b>@h</b></th>
+				}
+			</tr>
+		</thead>
+		<tbody>
+
+			@foreach (var item in drink)
+			{
+				<tr>
+					<td>@item.Id</td>
+					<td>@item.DrinkName</td>
+					<td>@item.DrinkPrice</td>
+					<td>@item.DrinkDescription</td>
+					<td>@item.DisableData</td>
+					<td>
+						<button type="button" class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#exampleModal" @onclick="()=>ShowDeleteDialog(item.Id)">
+							Delete
+						</button>
+					</td>
+
+					<td> <button type="submit" class="btn btn-info btn-sm" @onclick="()=>UpdateDrinkButton(item.Id)">Update</button></td>
+
+					@if (item.DisableData)
+					{
+						<td> <button type="submit" class="btn btn-sm btn-success" @onclick="()=>DrinkAvalability(item)">Disable</button></td>
+					}
+					else
+					{
+						<td> <button type="submit" class="btn btn-sm btn-danger" @onclick="()=>DrinkAvalability(item)">Enable</button></td>
+					}
+				</tr>
+			}
+
+		</tbody>
+	</table>
+</div>
+
+<button type="button" class="btn btn-primary  mb-10 mt-10" @onclick="AddDrinkItam">Add Drink</button>
+
+@if (displayDrinkForm == true)
+{
+	<div class="container-fluid" style="width: 80rem;">
+		<form>
+
+			<AddDrinkForm myDrink="NewDrink"/>
+
+			<button type="button" class="btn btn-primary mt-20" @onclick="AddDrinkType">Add</button>
+
+		</form>
+	</div>
+}
+
+@if (DeleteDialog == true)
+{
+	<div class="modal fade show" id="myModal" style="display:block; background-color: rgba(10,10,10,.8);"
+	 aria-modal="true" role="dialog">
+		<div class="modal-dialog">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h4 class="modal-title">Delete Dialog </h4>
+					<button type="button" class="btn-danger" @onclick="@ModalCancel">&times;</button>
+				</div>
+				<div class="modal-body">
+					<p>Are you sure you want to delete the Drink? </p>
+				</div>
+				<div class="modal-footer flex-column">
+					<button type="button" class="btn btn-primary" @onclick="DeleteDrinkType">OK</button>
+				</div>
+			</div>
+		</div>
+	</div>
+}
+
+@if (updateDialog == true)
+{
+	<div class="modal fade show" id="myModal" style="display:block; background-color: rgba(10,10,10,.8);"
+	 aria-modal="true" role="dialog">
+		<div class="modal-dialog">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h4 class="modal-title">Update Dialog </h4>
+					<button type="button" class="btn-danger" @onclick="@ModalCancel">&times;</button>
+				</div>
+				<div class="modal-body flex-column">
+
+					<AddDrinkForm myDrink="NewDrink"/>
+
+				</div>
+				<div class="modal-footer flex-column">
+					<button type="button" class="btn btn-primary" @onclick="UpdateKind">OK</button>
+				</div>
+			</div>
+		</div>
+	</div>
+}
+
+
+
+@code {
+	List<DrinkMenu> drink = new List<DrinkMenu>();
+	DrinkMenu NewDrink = new DrinkMenu();
+	string[] Headings = { "ID", "Name", "Price", "Desicription", "Availability", "Delete", "Update", "Disable/Enable" };
+	bool displayDrinkForm;
+	int DrinkId;
+	bool warning;
+	string? warningMessage;
+	bool addDrink;
+	string? message;
+	bool updDrink;
+	bool delDrink;
+	bool DeleteDialog;
+	int deleteId;
+	bool updateDialog;
+	int updateId;
+
+	public void AddDrinkItam()
+	{
+		displayDrinkForm = true;
+	}
+
+	public async Task AddDrinkType()
+	{
+		if (!string.IsNullOrWhiteSpace(NewDrink.DrinkName) && !string.IsNullOrWhiteSpace(NewDrink.DrinkDescription) && NewDrink.DrinkPrice > 0)
+		{
+			DrinkId = await DrinkType.CreateDrink(NewDrink);
+
+			if (DrinkId == 0)
+			{
+				warning = true;
+				warningMessage = "The name is already exist. Please insert a different name";
+			}
+			else
+			{
+				addDrink = true;
+				message = "New drink has been added with Id number:" + " " + DrinkId;
+			}
+		}
+		else if (string.IsNullOrWhiteSpace(NewDrink.DrinkName))
+		{
+			warning = true;
+			warningMessage = "Please enter drink name";
+		}
+		else if (string.IsNullOrWhiteSpace(NewDrink.DrinkDescription))
+		{
+			warning = true;
+			warningMessage = "Please enter drink Description ";
+		}
+		else if (NewDrink.DrinkPrice == 0)
+		{
+			warning = true;
+			warningMessage = "Please enter drink price ";
+		}
+
+		displayDrinkForm = false;
+		NewDrink = new();
+		await OnInitializedAsync();
+	}
+
+	protected override async Task OnInitializedAsync()
+	{
+		drink = await DrinkType.ReadDrink();
+		StateHasChanged();
+	}
+
+	public void ShowDeleteDialog(int id)
+	{
+		deleteId = id;
+		DeleteDialog = true;
+	}
+
+	public async Task DeleteDrinkType()
+	{
+		await DrinkType.DeleteDrink(deleteId);
+		DeleteDialog = false;
+		delDrink = true;
+		await OnInitializedAsync();
+	}
+
+	public void ModalCancel()
+	{
+		DeleteDialog = false;
+		updateDialog = false;
+
+	}
+
+	public async Task UpdateDrinkButton(int id)
+	{
+		updateDialog = true;
+		updateId = id;
+		NewDrink = await DrinkType.UpdateDrink(id);
+		displayDrinkForm = false;
+	}
+
+	public async Task UpdateKind()
+	{
+		if (!string.IsNullOrWhiteSpace(NewDrink.DrinkName) && NewDrink.DrinkPrice > 0 && !string.IsNullOrWhiteSpace(NewDrink.DrinkDescription))
+		{
+			await DrinkType.UpdateDrink(updateId);
+			message = NewDrink.DrinkName +" "+ "Drink has been updated";
+			updDrink = true;
+		}
+		else if (string.IsNullOrWhiteSpace(NewDrink.DrinkName))
+		{
+			warning = true;
+			warningMessage = "Please enter drink name";
+			await OnInitializedAsync();
+		}
+		else if (NewDrink.DrinkPrice == 0)
+		{
+			warning = true;
+			warningMessage = "Please enter drink price";
+			await OnInitializedAsync();
+		}
+		else if (string.IsNullOrWhiteSpace(NewDrink.DrinkDescription))
+		{
+			warning = true;
+			warningMessage = "Please enter drink desicription";
+			await OnInitializedAsync();
+		}
+
+		NewDrink = new();
+		updateDialog = false;
+		await OnInitializedAsync();
+	}
+
+	public async Task DrinkAvalability(DrinkMenu T)
+	{
+		await DrinkType.DrinkChangeAvialability(T.Id);
+	}
+
+	public void CloseErrorWarning()
+	{
+		warning = false;
+	}
+
+	public void CloseDeleteWarning()
+	{
+		delDrink = false;
+	}
+	public void CloseAddWarning()
+	{
+		addDrink = false;
+	}
+
+	public void CloseUpdateWarning()
+	{
+		updDrink = false;
+	}
+
+}

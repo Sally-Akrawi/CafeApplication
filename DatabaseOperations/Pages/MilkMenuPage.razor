@@ -1,0 +1,328 @@
+﻿@page "/"
+@inject IDataService Milk
+@inject NavigationManager navigation
+
+
+<PageTitle>Milk Menu</PageTitle>
+
+<h2 class="text-center mt-3 mb-5" style="font-family:'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif; color:darkblue"><b>Milk Menu</b></h2>
+
+@if (addMilk == true)
+{
+
+	<div class="alert alert-success alert-dismissible fade show" role="alert">
+		@message
+		<button type="button" class="btn-close" data-bs-dismiss="alert" @onclick="CloseAddWarning" aria-label="Close"></button>
+	</div>
+}
+
+
+@if (delMilk == true)
+{
+
+	<div class="alert alert-primary alert-dismissible fade show" role="alert">
+		The milk has been deleted
+		<button type="button" class="btn-close" data-bs-dismiss="alert" @onclick="CloseDeleteWarning" aria-label="Close"></button>
+	</div>
+}
+
+@if (warning == true)
+{
+	<div class="alert alert-danger alert-dismissible fade show" role="alert">
+		@warningMessage
+		<button type="button" class="btn-close" data-bs-dismiss="alert" @onclick="CloseErrorWarning" aria-label="Close"></button>
+	</div>
+}
+
+@if (updMilk == true)
+{
+	<div class="alert alert-success alert-dismissible fade show" role="alert">
+		@message
+		<button type="button" class="btn-close" data-bs-dismiss="alert" @onclick="CloseUpdateWarning" aria-label="Close"></button>
+	</div>
+}
+
+<div class="container-fluid" style="width: 80rem;">
+	<table class="table table-bordered table-hover table-striped mb-5">
+
+
+		<thead>
+			<tr>
+				@foreach (var h in headings)
+				{
+					<th scope="col"><b>@h</b></th>
+				}
+			</tr>
+		</thead>
+		<tbody>
+
+			@foreach (var item in milk)
+			{
+				<tr>
+					<td>@item.Id</td>
+					<td>@item.Name</td>
+					<td>@item.Price</td>
+					<td>@item.Description</td>
+					<td>@item.DisableData</td>
+					<td>
+						<button type="button" class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#exampleModal" @onclick="()=>ShowDialog(item.Id)">
+							Delete
+						</button>
+					</td>
+
+					<td> <button type="submit" class="btn btn-info btn-sm" @onclick="()=>UpdateMilky(item.Id)">Update</button></td>
+
+
+					@if (item.DisableData)
+					{
+
+						<td> <button type="submit" class="btn btn-sm btn-success" @onclick="()=>MilkAvalability(item)">Disable</button></td>
+					}
+					else
+					{
+						<td> <button type="submit" class="btn btn-sm btn-danger" @onclick="()=>MilkAvalability(item)">Enable</button></td>
+					}
+				</tr>
+
+			}
+
+		</tbody>
+	</table>
+</div>
+@if (deletDialog == true)
+{
+	<div class="modal fade show" id="myModal" style="display:block; background-color: rgba(10,10,10,.8);"
+	 aria-modal="true" role="dialog">
+		<div class="modal-dialog">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h4 class="modal-title">Delete Dialog </h4>
+					<button type="button" class="btn-danger" @onclick="@ModalCancel">&times;</button>
+				</div>
+				<div class="modal-body">
+					<p>Are you sure you want to delete the milk? </p>
+				</div>
+				<div class="modal-footer flex-column">
+					<button type="button" class="btn btn-primary" @onclick="DeleteMilkType">OK</button>
+				</div>
+			</div>
+		</div>
+	</div>
+}
+
+@if (updateDialog == true)
+{
+	<div class="modal fade show" id="myModal" style="display:block; background-color: rgba(10,10,10,.8);"
+	 aria-modal="true" role="dialog">
+		<div class="modal-dialog">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h4 class="modal-title">Update Dialog </h4>
+					<button type="button" class="btn-danger" @onclick="@ModalCancel">&times;</button>
+				</div>
+				<div class="modal-body flex-column">
+					<p><MilkForm milk="milkItem" /></p>
+				</div>
+				<div class="modal-footer flex-column">
+					<button type="button" class="btn btn-primary" @onclick="UpdateKind">OK</button>
+				</div>
+			</div>
+		</div>
+	</div>
+}
+
+
+<button type="button" class="btn btn-primary  mb-10 mt-10" @onclick="MilkForm">Add Milk</button>
+
+<button type="button" class="btn btn-primary  mb-10 mt-10" @onclick="PriceCondition">Between $5 & $6</button>
+
+
+
+@foreach (var item in filterMilk)
+{
+	<MilkDetailsBox milk="item" />
+}
+
+
+@if (displayAddForm == true)
+{
+	<div class="container-fluid" style="width: 80rem;">
+		<form>
+
+			<MilkForm milk="milkItem" />
+
+			<button type="button" class="btn btn-primary mt-20" @onclick="AddMilkType">Add</button>
+
+		</form>
+	</div>
+}
+
+
+
+@code {
+	bool deletDialog;
+	bool delMilk;
+	string[] headings = { "ID", "Name", "Price", "Desicription", "Availability", "Delete", "Update", "Disable/Enable" };
+	List<MilkType> milk = new List<MilkType>();
+	MilkType milkItem = new MilkType();
+	bool displayAddForm;
+	bool updMilk;
+	int milkId;
+	bool addMilk;
+	int a;
+	string? message;
+	bool updateDialog;
+	string? warningMessage;
+	bool warning;
+	int deleteId;
+	public List<MilkType> filterMilk = new();
+
+
+
+	public void MilkForm()
+	{
+		displayAddForm = true;
+
+	}
+
+	public async Task AddMilkType()
+	{
+		if (!string.IsNullOrWhiteSpace(milkItem.Name) && !string.IsNullOrWhiteSpace(milkItem.Description) && milkItem.Price > 0)
+		{
+			milkId = await Milk.CreateMilk(milkItem);
+
+			if (milkId == 0)
+			{
+				warning = true;
+				warningMessage = "The name is already exist. Please insert a different name";
+
+			}
+			else
+			{
+				addMilk = true;
+				message = "new milk has been added with Id number:" + " " + milkId;
+
+			}
+		}
+		else if (string.IsNullOrWhiteSpace(milkItem.Name))
+		{
+			warning = true;
+			warningMessage = "Please enter milk name";
+
+		}
+		else if (string.IsNullOrWhiteSpace(milkItem.Description))
+		{
+			warning = true;
+			warningMessage = "Please enter milk description ";
+		}
+		else if (milkItem.Price == 0)
+		{
+			warning = true;
+			warningMessage = "Please enter milk price ";
+		}
+
+		displayAddForm = false;
+		milkItem = new();
+		await OnInitializedAsync();
+	}
+
+
+
+	protected override async Task OnInitializedAsync()
+	{
+		milk = await Milk.ReadMilkTable();
+		StateHasChanged();
+	}
+
+	public void ShowDialog(int id)
+	{
+		deleteId = id;
+		deletDialog = true;
+	}
+
+	public async Task DeleteMilkType()
+	{
+		await Milk.DeleteMilk(deleteId);
+		delMilk = true;
+		deletDialog = false;
+		await OnInitializedAsync();
+	}
+
+
+	public async Task UpdateMilky(int b)
+	{
+		updateDialog = true;
+		a = b;
+		milkItem = await Milk.UpdateMilk(b);
+		displayAddForm = false;
+	}
+
+	public async Task UpdateKind()
+	{
+		if (!string.IsNullOrWhiteSpace(milkItem.Name) && milkItem.Price > 0 && !string.IsNullOrWhiteSpace(milkItem.Description))
+		{
+		    await Milk.UpdateMilk(a);
+			message = milkItem.Name +" "+ "Milk has been updated";
+			updMilk = true;
+		}
+		else if (string.IsNullOrWhiteSpace(milkItem.Name))
+		{
+			warning = true;
+			warningMessage = "Please enter milk name";
+
+		}
+		else if (milkItem.Price == 0)
+		{
+			warning = true;
+			warningMessage = "Please enter milk price";
+		}
+		else if (string.IsNullOrWhiteSpace(milkItem.Description))
+		{
+			warning = true;
+			warningMessage = "Please enter milk desicription";
+		}
+		
+		milkItem = new();
+		updateDialog = false;
+		await OnInitializedAsync();
+		
+	}
+
+	public void CloseAddWarning()
+	{
+		addMilk = false;
+	}
+
+	public void CloseDeleteWarning()
+	{
+		delMilk = false;
+	}
+
+	public void CloseUpdateWarning()
+	{
+		updMilk = false;
+	}
+
+	public void CloseErrorWarning()
+	{
+		warning = false;
+	}
+
+	public async Task MilkAvalability(MilkType milk)
+	{
+		await Milk.ChangeMilkAvailability(milk.Id);
+	}
+
+	public void ModalCancel()
+	{
+		deletDialog = false;
+		updateDialog = false;
+	}
+
+
+	public async Task PriceCondition()
+	{
+		filterMilk = await Milk.SortByPrice();
+	}
+
+}

@@ -1,0 +1,306 @@
+﻿@page "/Syrup"
+@inject IDataService SyrupType
+
+<PageTitle>Syrup Menu</PageTitle>
+<h2 class="text-center mt-3 mb-5" style="font-family:'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif; color:darkblue"><b>Syrup Menu</b></h2>
+
+@if (updSyrup == true)
+{
+
+	<div class="alert alert-success alert-dismissible fade show" role="alert">
+		@message
+		<button type="button" class="btn-close" data-bs-dismiss="alert" @onclick="CloseUpdateWarning" aria-label="Close"></button>
+	</div>
+}
+
+@if (warning == true)
+{
+
+	<div class="alert alert-danger alert-dismissible fade show" role="alert">
+		@warningMessage
+		<button type="button" class="btn-close" data-bs-dismiss="alert" @onclick="CloseErrorWarning" aria-label="Close"></button>
+	</div>
+}
+
+@if (addSyrup == true)
+{
+
+	<div class="alert alert-success alert-dismissible fade show" role="alert">
+		@message
+		<button type="button" class="btn-close" data-bs-dismiss="alert" @onclick="CloseAddWarning" aria-label="Close"></button>
+	</div>
+}
+
+@if (delSyrup == true)
+{
+
+	<div class="alert alert-primary alert-dismissible fade show" role="alert">
+		The syrup has been deleted
+		<button type="button" class="btn-close" data-bs-dismiss="alert" @onclick="CloseDeleteWarning" aria-label="Close"></button>
+	</div>
+}
+
+
+
+<div class="container-fluid" style="width: 80rem;">
+	<table class="table table-bordered table-hover table-striped mb-5">
+
+		<thead>
+			<tr>
+				@foreach (var h in Headings)
+				{
+					<th scope="col"><b>@h</b></th>
+				}
+			</tr>
+		</thead>
+		<tbody>
+
+			@foreach (var item in Syrup)
+			{
+				<tr>
+					<td>@item.Id</td>
+					<td>@item.SyrupName</td>
+					<td>@item.SyrupPrice</td>
+					<td>@item.SyrupDescription</td>
+					<td>@item.DisableData</td>
+
+					<td>
+						<button type="button" class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#exampleModal" @onclick="()=>ShowDeleteDialog(item.Id)">
+							Delete
+						</button>
+					</td>
+					<td> <button type="submit" class="btn btn-info btn-sm" @onclick="()=>UpdateSyrupButton(item.Id)">Update</button></td>
+
+					@if (item.DisableData)
+					{
+
+						<td> <button type="submit" class="btn btn-sm btn-success" @onclick="()=>SyrupAvalability(item)">Disable</button></td>
+					}
+					else
+					{
+						<td> <button type="submit" class="btn btn-sm btn-danger" @onclick="()=>SyrupAvalability(item)">Enable</button></td>
+					}
+
+				</tr>
+			}
+
+		</tbody>
+	</table>
+</div>
+
+<button type="button" class="btn btn-primary  mb-10 mt-10" @onclick="AddSyrupItam">Add Syrup</button>
+
+@if (displaySyrupForm == true)
+{
+	<div class="container-fluid" style="width: 80rem;">
+		<form>
+
+			<AddSyrupForm mySyrup="NewSyrup" />
+
+			<button type="button" class="btn btn-primary mt-20" @onclick="AddSyrupType">Add</button>
+
+		</form>
+	</div>
+}
+
+@if (DeleteDialog == true)
+{
+	<div class="modal fade show" id="myModal" style="display:block; background-color: rgba(10,10,10,.8);"
+	 aria-modal="true" role="dialog">
+		<div class="modal-dialog">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h4 class="modal-title">Delete Dialog </h4>
+					<button type="button" class="btn-danger" @onclick="@ModalCancel">&times;</button>
+				</div>
+				<div class="modal-body">
+					<p>Are you sure you want to delete the syrup? </p>
+				</div>
+				<div class="modal-footer flex-column">
+					<button type="button" class="btn btn-primary" @onclick="DeleteSyrupType">OK</button>
+				</div>
+			</div>
+		</div>
+	</div>
+}
+
+@if (updateDialog == true)
+{
+	<div class="modal fade show" id="myModal" style="display:block; background-color: rgba(10,10,10,.8);"
+	 aria-modal="true" role="dialog">
+		<div class="modal-dialog">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h4 class="modal-title">Update Dialog </h4>
+					<button type="button" class="btn-danger" @onclick="@ModalCancel">&times;</button>
+				</div>
+				<div class="modal-body flex-column">
+					<AddSyrupForm mySyrup="NewSyrup" />
+				</div>
+				<div class="modal-footer flex-column">
+					<button type="button" class="btn btn-primary" @onclick="UpdateKind">OK</button>
+				</div>
+			</div>
+		</div>
+	</div>
+}
+
+@code {
+
+	List<SyrupMenu> Syrup = new List<SyrupMenu>();
+	SyrupMenu NewSyrup = new SyrupMenu();
+	string[] Headings = { "ID", "Name", "Price", "Desicription", "Availability", "Delete", "Update", "Disable/Enable" };
+	bool displaySyrupForm;
+	int SyrupId;
+	bool warning;
+	string? message;
+	string? warningMessage;
+	bool updSyrup;
+	bool addSyrup;
+	bool delSyrup;
+	int deleteId;
+	bool DeleteDialog;
+	bool updateDialog;
+	int updateId;
+
+
+	public void AddSyrupItam()
+	{
+		displaySyrupForm = true;
+	}
+
+	public async Task AddSyrupType()
+	{
+		if (!string.IsNullOrWhiteSpace(NewSyrup.SyrupName) && !string.IsNullOrWhiteSpace(NewSyrup.SyrupDescription) && NewSyrup.SyrupPrice > 0)
+		{
+			SyrupId = await SyrupType.CreateSyrup(NewSyrup);
+
+			if (SyrupId == 0)
+			{
+				warning = true;
+				warningMessage = "The name is already exist. Please insert a different name";
+
+			}
+			else
+			{
+				addSyrup = true;
+				message = "New syrup has been added with Id number:" + " " + SyrupId;
+
+			}
+		}
+		else if (string.IsNullOrWhiteSpace(NewSyrup.SyrupName))
+		{
+			warning = true;
+			warningMessage = "Please enter syrup name";
+
+		}
+		else if (string.IsNullOrWhiteSpace(NewSyrup.SyrupDescription))
+		{
+			warning = true;
+			warningMessage = "Please enter syrup description ";
+		}
+		else if (NewSyrup.SyrupPrice == 0)
+		{
+			warning = true;
+			warningMessage = "Please enter syrup price ";
+		}
+
+		displaySyrupForm = false;
+		NewSyrup = new();
+		await OnInitializedAsync();
+
+	}
+
+	protected override async Task OnInitializedAsync()
+	{
+		Syrup = await SyrupType.ReadSyrup();
+		StateHasChanged();
+	}
+
+	public void ShowDeleteDialog(int id)
+	{
+		deleteId = id;
+		DeleteDialog = true;
+	}
+
+	public async Task DeleteSyrupType()
+	{
+		await SyrupType.DeleteSyrup(deleteId);
+		DeleteDialog = false;
+		delSyrup = true;
+		await OnInitializedAsync();
+	}
+
+	public void ModalCancel()
+	{
+		DeleteDialog = false;
+		updateDialog = false;
+
+	}
+
+	public void CloseErrorWarning()
+	{
+		warning = false;
+
+	}
+
+	public void CloseDeleteWarning()
+	{
+		delSyrup = false;
+	}
+	public void CloseAddWarning()
+	{
+		addSyrup = false;
+	}
+
+	public void CloseUpdateWarning()
+	{
+		updSyrup = false;
+	}
+
+	public async Task UpdateSyrupButton(int id)
+	{
+		updateDialog = true;
+		updateId = id;
+		NewSyrup = await SyrupType.UpdateSyrup(id);
+		displaySyrupForm = false;
+	}
+
+	public async Task UpdateKind()
+	{
+		if (!string.IsNullOrWhiteSpace(NewSyrup.SyrupName) && NewSyrup.SyrupPrice > 0 && !string.IsNullOrWhiteSpace(NewSyrup.SyrupDescription))
+		{
+			await SyrupType.UpdateSyrup(updateId);
+			message = NewSyrup.SyrupName + " "+ "has been updated";
+			updSyrup = true;
+		}
+		else if (string.IsNullOrWhiteSpace(NewSyrup.SyrupName))
+		{
+			warning = true;
+			warningMessage = "Please enter syrup name";
+			
+
+		}
+		else if (NewSyrup.SyrupPrice == 0)
+		{
+			warning = true;
+			warningMessage = "Please enter syrup price";
+			
+
+		}
+		else if (string.IsNullOrWhiteSpace(NewSyrup.SyrupDescription))
+		{
+			warning = true;
+			warningMessage = "Please enter syrup desicription";
+			
+		}
+		NewSyrup = new();
+		updateDialog = false;
+		await OnInitializedAsync();
+	}
+
+	public async Task SyrupAvalability(SyrupMenu syr)
+	{
+		await SyrupType.SyrupChangeAvialability(syr.Id);
+	}
+}

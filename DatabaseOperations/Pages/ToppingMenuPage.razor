@@ -1,0 +1,300 @@
+﻿@page "/Topping"
+@inject IDataService Topping
+
+<PageTitle>Topping Menu</PageTitle>
+<h2 class="text-center mt-3 mb-5" style="font-family:'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif; color:darkblue"><b>Topping Menu</b></h2>
+
+@if (updTopper == true)
+{
+
+	<div class="alert alert-success alert-dismissible fade show" role="alert">
+		@message
+		<button type="button" class="btn-close" data-bs-dismiss="alert" @onclick="CloseUpdateWarning" aria-label="Close"></button>
+	</div>
+}
+
+@if (warning == true)
+{
+
+	<div class="alert alert-danger alert-dismissible fade show" role="alert">
+		@warningMessage
+		<button type="button" class="btn-close" data-bs-dismiss="alert" @onclick="CloseErrorWarning" aria-label="Close"></button>
+	</div>
+}
+
+@if (addTopper == true)
+{
+
+	<div class="alert alert-success alert-dismissible fade show" role="alert">
+		@message
+		<button type="button" class="btn-close" data-bs-dismiss="alert" @onclick="CloseAddWarning" aria-label="Close"></button>
+	</div>
+}
+
+@if (delTopper == true)
+{
+
+	<div class="alert alert-primary alert-dismissible fade show" role="alert">
+		The topping has been deleted
+		<button type="button" class="btn-close" data-bs-dismiss="alert" @onclick="CloseDeleteWarning" aria-label="Close"></button>
+	</div>
+}
+
+<div class="container-fluid" style="width: 80rem;">
+	<table class="table table-bordered table-hover table-striped mb-5">
+
+		<thead>
+			<tr>
+				@foreach (var h in Headings)
+				{
+					<th scope="col"><b>@h</b></th>
+				}
+			</tr>
+		</thead>
+		<tbody>
+
+			@foreach (var item in Topper)
+			{
+				<tr>
+					<td>@item.Id</td>
+					<td>@item.ToppingName</td>
+					<td>@item.ToppingPrice</td>
+					<td>@item.ToppingDescription</td>
+					<td>@item.DisableData</td>
+					<td>
+						<button type="button" class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#exampleModal" @onclick="()=>ShowDeleteDialog(item.Id)">
+							Delete
+						</button>
+					</td>
+
+					<td> <button type="submit" class="btn btn-info btn-sm" @onclick="()=>UpdateToppingButton(item.Id)">Update</button></td>
+
+					@if (item.DisableData)
+					{
+
+						<td> <button type="submit" class="btn btn-sm btn-success" @onclick="()=>ToppingAvalability(item)">Disable</button></td>
+					}
+					else
+					{
+						<td> <button type="submit" class="btn btn-sm btn-danger" @onclick="()=>ToppingAvalability(item)">Enable</button></td>
+					}
+				</tr>
+			}
+		</tbody>
+	</table>
+</div>
+
+<button type="button" class="btn btn-primary  mb-10 mt-10" @onclick="AddToppingItam">Add Topping</button>
+
+@if (displayToppingForm == true)
+{
+	<div class="container-fluid" style="width: 80rem;">
+		<form>
+
+			<AddToppingForm myTop="NewTopper" />
+
+			<button type="button" class="btn btn-primary mt-20" @onclick="AddToppingType">Add</button>
+
+		</form>
+	</div>
+}
+
+@if (DeleteDialog == true)
+{
+	<div class="modal fade show" id="myModal" style="display:block; background-color: rgba(10,10,10,.8);"
+	 aria-modal="true" role="dialog">
+		<div class="modal-dialog">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h4 class="modal-title">Delete Dialog </h4>
+					<button type="button" class="btn-danger" @onclick="@ModalCancel">&times;</button>
+				</div>
+				<div class="modal-body">
+					<p>Are you sure you want to delete the topping? </p>
+				</div>
+				<div class="modal-footer flex-column">
+					<button type="button" class="btn btn-primary" @onclick="DeleteToppingType">OK</button>
+				</div>
+			</div>
+		</div>
+	</div>
+}
+@if (updateDialog == true)
+{
+	<div class="modal fade show" id="myModal" style="display:block; background-color: rgba(10,10,10,.8);"
+	 aria-modal="true" role="dialog">
+		<div class="modal-dialog">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h4 class="modal-title">Update Dialog </h4>
+					<button type="button" class="btn-danger" @onclick="@ModalCancel">&times;</button>
+				</div>
+				<div class="modal-body flex-column">
+
+					<AddToppingForm myTop="NewTopper" />
+
+				</div>
+				<div class="modal-footer flex-column">
+					<button type="button" class="btn btn-primary" @onclick="UpdateKind">OK</button>
+				</div>
+			</div>
+		</div>
+	</div>
+}
+
+@code {
+	List<ToppingMenu> Topper = new List<ToppingMenu>();
+	ToppingMenu NewTopper = new ToppingMenu();
+	string[] Headings = { "ID", "Name", "Price", "Desicription", "Availability", "Delete", "Update", "Disable/Enable" };
+	bool displayToppingForm;
+	int ToppingId;
+	bool warning;
+	string? warningMessage;
+	bool addTopper;
+	bool delTopper;
+	bool updTopper;
+	int deleteId;
+	bool DeleteDialog;
+	bool updateDialog;
+	string? message;
+	int updateId;
+
+	public void AddToppingItam()
+	{
+		displayToppingForm = true;
+	}
+
+	public async Task AddToppingType()
+	{
+		if (!string.IsNullOrWhiteSpace(NewTopper.ToppingName) && !string.IsNullOrWhiteSpace(NewTopper.ToppingDescription) && NewTopper.ToppingPrice > 0)
+		{
+			ToppingId = await Topping.CreateTopping(NewTopper);
+
+			if (ToppingId == 0)
+			{
+				warning = true;
+				warningMessage = "The name is already exist. Please insert a different name";
+
+			}
+			else
+			{
+				addTopper = true;
+				message = "New topping has been added with Id number:" + " " + ToppingId;
+
+			}
+		}
+		else if (string.IsNullOrWhiteSpace(NewTopper.ToppingName))
+		{
+			warning = true;
+			warningMessage = "Please enter topping name";
+
+		}
+		else if (string.IsNullOrWhiteSpace(NewTopper.ToppingDescription))
+		{
+			warning = true;
+			warningMessage = "Please enter topping description ";
+		}
+		else if (NewTopper.ToppingPrice == 0)
+		{
+			warning = true;
+			warningMessage = "Please enter topping price ";
+		}
+
+		displayToppingForm = false;
+		NewTopper = new();
+		await OnInitializedAsync();
+
+	}
+
+	protected override async Task OnInitializedAsync()
+	{
+		Topper = await Topping.ReadTopping();
+		StateHasChanged();
+	}
+
+	public void ShowDeleteDialog(int id)
+	{
+		deleteId = id;
+		DeleteDialog = true;
+	}
+
+	public async Task DeleteToppingType()
+	{
+		await Topping.DeleteTopping(deleteId);
+		DeleteDialog = false;
+		delTopper = true;
+		await OnInitializedAsync();
+	}
+
+	public void ModalCancel()
+	{
+		DeleteDialog = false;
+		updateDialog = false;
+	}
+
+	public async Task UpdateToppingButton(int id)
+	{
+		updateDialog = true;
+		updateId = id;
+		NewTopper = await Topping.UpdateTopping(id);
+		displayToppingForm = false;
+	}
+
+	public async Task UpdateKind()
+	{
+		if (!string.IsNullOrWhiteSpace(NewTopper.ToppingName) && NewTopper.ToppingPrice > 0 && !string.IsNullOrWhiteSpace(NewTopper.ToppingDescription))
+		{
+			await Topping.UpdateTopping(updateId);
+			message = NewTopper.ToppingName +" "+ "Topping has been updated";
+			updTopper = true;
+		
+		}
+		else if (string.IsNullOrWhiteSpace(NewTopper.ToppingName))
+		{
+			warning = true;
+			warningMessage = "Please enter topping name";
+			
+		}
+		else if (NewTopper.ToppingPrice == 0)
+		{
+			warning = true;
+			warningMessage = "Please enter topping price";
+			
+		}
+		else if (string.IsNullOrWhiteSpace(NewTopper.ToppingDescription))
+		{
+			warning = true;
+			warningMessage = " please enter topping desicription";
+		}
+
+		NewTopper = new();
+		updateDialog = false;
+		await OnInitializedAsync();
+		
+	}
+
+	public async Task ToppingAvalability(ToppingMenu T)
+	{
+		await Topping.ToppingChangeAvialability(T.Id);
+	}
+
+	public void CloseErrorWarning()
+	{
+		warning = false;
+
+	}
+
+	public void CloseDeleteWarning()
+	{
+		delTopper = false;
+	}
+	public void CloseAddWarning()
+	{
+		addTopper = false;
+	}
+
+	public void CloseUpdateWarning()
+	{
+		updTopper = false;
+	}
+}

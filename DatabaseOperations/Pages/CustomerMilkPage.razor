@@ -1,0 +1,42 @@
+﻿@page "/cotumer"
+@inject IDataService Milk
+
+
+<h2 class="text-center mt-3 mb-5" style="font-family:'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif; color:darkblue"><b>Milk Menu</b></h2>
+
+<div class="container-fluid" style="width: 50rem;">
+
+	<h6>Click on the milk to see more detials</h6>
+	<div class="list-group list-group-item list-group-item-action mt-5">
+
+		@foreach (var item in myMilk)
+		{
+			<a @onclick="()=>ShowInfo(item.Id)" class="list-group-item list-group-item-action">
+				@item.Name
+			</a>
+		}
+
+	</div>
+</div>
+<MilkDetailsBox milk="milky" />
+
+
+
+
+@code {
+
+	List<MilkType> myMilk = new List<MilkType>();
+	MilkType milky = new MilkType();
+
+	protected override async Task OnInitializedAsync()
+	{
+		myMilk = await Milk.ReadDisableMilkData();
+	}
+
+	public async Task ShowInfo(int milkId)
+	{
+		milky = await Milk.MilkCustomerDetails(milkId);
+		StateHasChanged();
+	}
+
+}

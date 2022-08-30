@@ -1,0 +1,46 @@
+﻿@page "/cotumerSyrup"
+@inject IDataService SyrupType
+
+
+
+<h2 class="text-center mt-3 mb-5" style="font-family:'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif; color:darkblue"><b>Syrup Menu</b></h2>
+<div class="container-fluid" style="width: 50rem;">
+	<h6>Click on the syrup's name to see more detials</h6>
+	<div class="list-group-item list-group-item-action  mt-5">
+		@foreach (var Item in Syrup)
+		{
+			<a @onclick="()=>ShowInfo(Item.Id)" class="list-group-item list-group-item-action">
+				@Item.SyrupName
+			</a>
+		}
+	</div>
+</div>
+<div class="container-fluid" style="width: 50rem;">
+	<div class="card mt-5 " style="width: 18rem;">
+		<div class="card-body">
+			<h5 class="card-title"><b>Syrup Details:</b> </h5>
+
+
+			<p><b>Syrup Name: </b>@NewSyrup.SyrupName</p>
+			<p><b>Price: </b>@NewSyrup.SyrupPrice</p>
+			<p><b>Description: </b>@NewSyrup.SyrupDescription</p>
+		</div>
+	</div>
+</div>
+
+@code {
+	List<SyrupMenu> Syrup = new List<SyrupMenu>();
+	SyrupMenu NewSyrup = new SyrupMenu();
+
+	protected override async Task OnInitializedAsync()
+	{
+
+		Syrup = await SyrupType.ReadDisableSyrup();
+	}
+
+	public async Task ShowInfo(int Id)
+	{
+		NewSyrup = await SyrupType.CustomerSyrupDetails(Id);
+
+	}
+}

@@ -1,0 +1,288 @@
+﻿@page "/Food"
+@inject IDataService FoodType;
+
+<h2 class="text-center mt-3 mb-5" style="font-family:'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif; color:darkblue"><b>Food Menu</b></h2>
+
+@if (addFood == true)
+{
+	<div class="alert alert-success alert-dismissible fade show" role="alert">
+		@message
+		<button type="button" class="btn-close" data-bs-dismiss="alert" @onclick="AddClose" aria-label="Close"></button>
+	</div>
+}
+
+@if (warning == true)
+{
+	<div class="alert alert-danger alert-dismissible fade show" role="alert">
+		@warningMessage
+		<button type="button" class="btn-close" data-bs-dismiss="alert" @onclick="Warning" aria-label="Close"></button>
+	</div>
+}
+
+@if (delFood == true)
+{
+	<div class="alert alert-success alert-dismissible fade show" role="alert">
+		Dish has been deleted
+		<button type="button" class="btn-close" data-bs-dismiss="alert" @onclick="DeleteClose" aria-label="Close"></button>
+	</div>
+}
+@if (updFood == true)
+{
+	<div class="alert alert-success alert-dismissible fade show" role="alert">
+		@message
+		<button type="button" class="btn-close" data-bs-dismiss="alert" @onclick="UpdateClose" aria-label="Close"></button>
+	</div>
+}
+
+<div class="container-fluid mb-5" style="width: 80rem;">
+	<table class="table table-bordered table-hover table-striped">
+		<thead>
+			<tr>
+				@foreach (var h in THead)
+				{
+					<th scope="col"><b>@h</b></th>
+				}
+			</tr>
+		</thead>
+		<tbody>
+
+			@foreach (var Item in newFood)
+			{
+				<tr>
+					<td>@Item.Id</td>
+					<td>@Item.FoodName</td>
+					<td>@Item.FoodPrice</td>
+					<td>@Item.DisableData</td>
+					<td>
+						<button type="button" class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#exampleModal" @onclick="@(() => ShowDialog(Item.Id))">
+							Delete
+						</button>
+					</td>
+
+					<td> <button type="button" @onclick="()=>UpdateFood(Item.Id)" class="btn btn-info btn-sm">Update</button></td>
+
+					@if (Item.DisableData)
+					{
+						<td> <button type="submit" class="btn btn-sm btn-success" @onclick="()=>DisableFood(Item.Id)">Disable</button></td>
+					}
+					else
+					{
+						<td> <button type="submit" class="btn btn-sm btn-danger" @onclick="()=>DisableFood(Item.Id)">Enable</button></td>
+					}
+				</tr>
+			}
+		</tbody>
+	</table>
+</div>
+
+<button type="button" @onclick="AddFood" class="btn btn-primary">Add Food</button>
+<br />
+<br />
+
+
+@if (deleteDialog == true)
+{
+	<div class="modal fade show" id="myModal" style="display:block; background-color: rgba(10,10,10,.8);"
+	 aria-modal="true" role="dialog">
+		<div class="modal-dialog">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h4 class="modal-title">Delete Dialog </h4>
+					<button type="button" class="btn-danger" @onclick="@ModalCancel">&times;</button>
+				</div>
+				<div class="modal-body">
+					<p>Are you Sure you want to delete the dish?</p>
+				</div>
+				<div class="modal-footer flex-column">
+					<button type="button" class="btn btn-primary" @onclick="DelFood">OK</button>
+				</div>
+			</div>
+		</div>
+	</div>
+}
+
+
+@if (updateDialog == true)
+{
+
+	<div class="modal fade show" id="myModal" style="display:block; background-color: rgba(10,10,10,.8);"
+	 aria-modal="true" role="dialog">
+
+		<div class="modal-dialog" style=" width: 380px; transition: bottom .75s ease-in-out;">
+			<div class="modal-content rounded-6 shadow">
+
+				<div class="modal-header">
+					<h4 class="modal-title">Update Dialog </h4>
+					<button type="button" class="btn-danger" @onclick="@ModalCancel" aria-label="Close">&times;</button>
+
+				</div>
+				<div class="modal-body">
+					<p> <FormDesign Food="foodItem" /></p>
+				</div>
+				<div class="modal-footer flex-column">
+					<button type="button" class="btn btn-primary" @onclick="UpdateFoodItem">OK</button>
+				</div>
+			</div>
+		</div>
+	</div>
+}
+
+
+@if (AddFoodForm == true)
+{
+	<form>
+		<FormDesign Food="foodItem" />
+		<button type="button" @onclick="AddFoodItem" class="btn btn-primary">Add</button>
+	</form>
+}
+
+
+@code {
+
+	List<FoodMenu> newFood = new List<FoodMenu>();
+	FoodMenu foodItem = new FoodMenu();
+	string[] THead = { "ID", "Name", "Price", "Availability", "Delete", "Update", "Disable/Enable" };
+	bool AddFoodForm;
+	bool addFood;
+	bool delFood;
+	bool updFood;
+	int FoodId;
+	int updateId;
+	bool deleteDialog;
+	bool updateDialog;
+	bool warning;
+	string warningMessage;
+	public string dishNameMsg = "Please enter dish name";
+	string message;
+	private int deleteId;
+
+	protected override async Task OnInitializedAsync()
+	{
+		newFood = await FoodType.ReadFoodTable();
+	}
+
+	void AddFood()
+	{
+		AddFoodForm = true;
+		updateDialog = false;
+	}
+
+	async Task AddFoodItem()
+	{
+		if (!string.IsNullOrWhiteSpace(foodItem.FoodName) && foodItem.FoodPrice > 0)
+
+		{
+			FoodId = await FoodType.CreateFood(foodItem);
+
+			
+
+
+			if (FoodId == 0)
+			{
+				warningMessage = "The name is already exist. Please enter different name";
+				warning = true;
+			}
+			else
+			{
+				message = "New dish has been added with Id number:" + " " + FoodId;
+				addFood = true;
+			}
+		}
+		else if (string.IsNullOrWhiteSpace(foodItem.FoodName))
+		{
+			warningMessage = "Please enter dish name";
+			warning = true;
+		}
+
+		else if (foodItem.FoodPrice == 0)
+		{
+			warningMessage = "Please enter dish price ";
+			warning = true;
+		}
+		AddFoodForm = false;
+		foodItem = new();
+		await OnInitializedAsync();
+		
+	}
+
+
+	public void ShowDialog(int id)
+	{
+		deleteDialog = true;
+		deleteId = id;
+	}
+
+	public void ModalCancel()
+	{
+		deleteDialog = false;
+		updateDialog = false;
+	}
+
+	public void ShowDialog()
+	{
+		updateDialog = true;
+	}
+
+	async Task DelFood()
+	{
+		await FoodType.DeleteFood(deleteId);
+		deleteDialog = false;
+		delFood = true;
+		await OnInitializedAsync();
+	}
+
+	async Task UpdateFood(int f)
+	{
+		updateDialog = true;
+		updateId = f;
+		AddFoodForm = false;
+		foodItem = await FoodType.UpdateFood(f);
+		await OnInitializedAsync();
+	}
+
+	async Task UpdateFoodItem()
+	{
+		if (string.IsNullOrWhiteSpace(foodItem.FoodName))
+		{
+			message = "Please enter dish name";
+		}
+		else if (foodItem.FoodPrice == 0)
+		{
+			message = "Please enter dish price";
+		}
+		else if (!string.IsNullOrWhiteSpace(foodItem.FoodName) && foodItem.FoodPrice > 0)
+		{
+			await FoodType.UpdateFood(updateId);
+			message = foodItem.FoodName + " " + "has been updated ";
+		}
+		foodItem = new();
+		updateDialog = false;
+		updFood = true;
+		await OnInitializedAsync();
+	}
+
+	public void AddClose()
+	{
+		addFood = false;
+	}
+
+	public void DeleteClose()
+	{
+		delFood = false;
+	}
+
+	public void UpdateClose()
+	{
+		updFood = false;
+	}
+
+	public void Warning()
+	{
+		warning = false;
+	}
+
+	public async Task DisableFood(int d)
+	{
+		await FoodType.FoodAvialability(d);
+	}
+}

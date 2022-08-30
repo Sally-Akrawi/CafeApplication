@@ -1,0 +1,295 @@
+﻿@page "/Tea"
+@inject IDataService TeaType
+
+<PageTitle>Tea Menu</PageTitle>
+<h2 class="text-center mt-3 mb-5" style="font-family:'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif; color:darkblue"><b>Tea Menu</b></h2>
+
+@if (updTea == true)
+{
+
+	<div class="alert alert-success alert-dismissible fade show" role="alert">
+		@message
+		<button type="button" class="btn-close" data-bs-dismiss="alert" @onclick="CloseUpdateWarning" aria-label="Close"></button>
+	</div>
+}
+
+@if (warning == true)
+{
+
+	<div class="alert alert-danger alert-dismissible fade show" role="alert">
+		@warningMessage
+		<button type="button" class="btn-close" data-bs-dismiss="alert" @onclick="CloseErrorWarning" aria-label="Close"></button>
+	</div>
+}
+
+@if (addTea == true)
+{
+
+	<div class="alert alert-success alert-dismissible fade show" role="alert">
+		@message
+		<button type="button" class="btn-close" data-bs-dismiss="alert" @onclick="CloseAddWarning" aria-label="Close"></button>
+	</div>
+}
+
+@if (delTea == true)
+{
+
+	<div class="alert alert-primary alert-dismissible fade show" role="alert">
+		The tea has been deleted
+		<button type="button" class="btn-close" data-bs-dismiss="alert" @onclick="CloseDeleteWarning" aria-label="Close"></button>
+	</div>
+}
+
+<div class="container-fluid" style="width: 80rem;">
+	<table class="table table-bordered table-hover table-striped mb-5">
+
+		<thead>
+			<tr>
+				@foreach (var h in Headings)
+				{
+					<th scope="col"><b>@h</b></th>
+				}
+			</tr>
+		</thead>
+		<tbody>
+
+			@foreach (var item in Tea)
+			{
+				<tr>
+					<td>@item.Id</td>
+					<td>@item.TeaName</td>
+					<td>@item.TeaPrice</td>
+					<td>@item.TeaDescription</td>
+					<td>@item.DisableData</td>
+					<td>
+						<button type="button" class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#exampleModal" @onclick="()=>ShowDeleteDialog(item.Id)">
+							Delete
+						</button>
+					</td>
+
+					<td> <button type="submit" class="btn btn-info btn-sm" @onclick="()=>UpdateTeaButton(item.Id)">Update</button></td>
+
+					@if (item.DisableData)
+					{
+
+						<td> <button type="submit" class="btn btn-sm btn-success" @onclick="()=>TeaAvalability(item)">Disable</button></td>
+					}
+					else
+					{
+						<td> <button type="submit" class="btn btn-sm btn-danger" @onclick="()=>TeaAvalability(item)">Enable</button></td>
+					}
+				</tr>
+
+			}
+
+		</tbody>
+	</table>
+</div>
+
+<button type="button" class="btn btn-primary  mb-10 mt-10" @onclick="AddTeaItam">Add Tea</button>
+
+@if (displayTeaForm == true)
+{
+	<div class="container-fluid" style="width: 80rem;">
+		<form>
+
+			<AddTeaForm MyTea="NewTea" />
+
+			<button type="button" class="btn btn-primary mt-20" @onclick="AddTeaType">Add</button>
+
+		</form>
+	</div>
+}
+
+@if (DeleteDialog == true)
+{
+	<div class="modal fade show" id="myModal" style="display:block; background-color: rgba(10,10,10,.8);"
+	 aria-modal="true" role="dialog">
+		<div class="modal-dialog">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h4 class="modal-title">Delete Dialog </h4>
+					<button type="button" class="btn-danger" @onclick="@ModalCancel">&times;</button>
+				</div>
+				<div class="modal-body">
+					<p>Are you sure you want to delete the tea? </p>
+				</div>
+				<div class="modal-footer flex-column">
+					<button type="button" class="btn btn-primary" @onclick="DeleteTeaType">OK</button>
+				</div>
+			</div>
+		</div>
+	</div>
+}
+
+@if (updateDialog == true)
+{
+	<div class="modal fade show" id="myModal" style="display:block; background-color: rgba(10,10,10,.8);"
+	 aria-modal="true" role="dialog">
+		<div class="modal-dialog">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h4 class="modal-title">Update Dialog </h4>
+					<button type="button" class="btn-danger" @onclick="@ModalCancel">&times;</button>
+				</div>
+				<div class="modal-body flex-column">
+
+					<p><AddTeaForm MyTea="NewTea" /></p>
+
+				</div>
+				<div class="modal-footer flex-column">
+					<button type="button" class="btn btn-primary" @onclick="UpdateKind">OK</button>
+				</div>
+			</div>
+		</div>
+	</div>
+}
+
+@code {
+	string[] Headings = { "ID", "Name", "Price", "Desicription", "Availability", "Delete", "Update", "Disable/Enable" };
+	List<TeaMenu> Tea = new List<TeaMenu>();
+	TeaMenu NewTea = new TeaMenu();
+	bool displayTeaForm;
+	int TeaId;
+	bool warning;
+	string? warningMessage;
+	string? message;
+	bool addTea;
+	int deleteId;
+	bool DeleteDialog;
+	bool delTea;
+	int updateId;
+	bool updateDialog;
+	bool updTea;
+
+	public void AddTeaItam()
+	{
+		displayTeaForm = true;
+	}
+
+	public async Task AddTeaType()
+	{
+		if (!string.IsNullOrWhiteSpace(NewTea.TeaName) && !string.IsNullOrWhiteSpace(NewTea.TeaDescription) && NewTea.TeaPrice > 0)
+		{
+			TeaId = await TeaType.CreateTea(NewTea);
+
+			if (TeaId == 0)
+			{
+				warning = true;
+				warningMessage = "The name is already exist. Please insert a different name";
+			}
+			else
+			{
+				addTea = true;
+				message = "New tea has been added with Id number:" + " " + TeaId;
+			}
+		}
+		else if (string.IsNullOrWhiteSpace(NewTea.TeaName))
+		{
+			warning = true;
+			warningMessage = "Please enter tea name";
+		}
+		else if (string.IsNullOrWhiteSpace(NewTea.TeaDescription))
+		{
+			warning = true;
+			warningMessage = "Please enter tea description ";
+		}
+		else if (NewTea.TeaPrice == 0)
+		{
+			warning = true;
+			warningMessage = "Please enter tea price ";
+		}
+		displayTeaForm = false;
+		NewTea = new();
+		await OnInitializedAsync();
+	}
+
+	protected override async Task OnInitializedAsync()
+	{
+		Tea = await TeaType.ReadTea();
+		StateHasChanged();
+	}
+
+	public void ShowDeleteDialog(int id)
+	{
+		deleteId = id;
+		DeleteDialog = true;
+	}
+
+	public async Task DeleteTeaType()
+	{
+		await TeaType.DeleteTea(deleteId);
+		DeleteDialog = false;
+		delTea = true;
+		await OnInitializedAsync();
+	}
+
+	public async Task UpdateTeaButton(int id)
+	{
+		updateDialog = true;
+		updateId = id;
+		NewTea = await TeaType.UpdateTea(id);
+		displayTeaForm = false;
+	}
+
+	public async Task UpdateKind()
+	{
+		if (!string.IsNullOrWhiteSpace(NewTea.TeaName) && NewTea.TeaPrice > 0 && !string.IsNullOrWhiteSpace(NewTea.TeaDescription))
+		{
+			await TeaType.UpdateTea(updateId);
+			message = NewTea.TeaName +" "+ "has been updated";
+			updTea = true;
+		}
+		else if (string.IsNullOrWhiteSpace(NewTea.TeaName))
+		{
+			warning = true;
+			warningMessage = "Please enter tea name";
+		}
+		else if (NewTea.TeaPrice == 0)
+		{
+			warning = true;
+			warningMessage = "Please enter tea price";
+		}
+		else if (string.IsNullOrWhiteSpace(NewTea.TeaDescription))
+		{
+			warning = true;
+			warningMessage = "Please enter tea desicription";		
+		}
+
+		NewTea = new();
+		updateDialog = false;
+		await OnInitializedAsync();
+	}
+	public void ModalCancel()
+	{
+		DeleteDialog = false;
+		updateDialog = false;
+
+	}
+
+	public async Task TeaAvalability(TeaMenu T)
+	{
+		await TeaType.TeaChangeAvialability(T.Id);
+	}
+
+	public void CloseErrorWarning()
+	{
+		warning = false;
+
+	}
+
+	public void CloseDeleteWarning()
+	{
+		delTea = false;
+	}
+	public void CloseAddWarning()
+	{
+		addTea = false;
+	}
+
+	public void CloseUpdateWarning()
+	{
+		updTea = false;
+	}
+
+}

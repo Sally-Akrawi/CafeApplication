@@ -1,0 +1,38 @@
+﻿
+<div class="modal-body p-3 pt-0">
+	<form>
+
+		<label for="exampleFormControlInput1" class="form-label mt-3">Drink Name:</label>
+		<div class="container">
+			<div class="row ">
+				<div class="col-7 ">
+					<input @bind="@milk.Name" type="text" onkeypress="return /[a-z ]/i.test(event.key)" class="form-control" id="exampleFormControlInput1">
+				</div>
+			</div>
+		</div>
+
+		<label for="exampleFormControlInput1" class="form-label mt-5"> Price: </label>
+		<div class="container">
+			<div class="row">
+				<div class="col-7">
+					<input @bind="@milk.Price" type="number" class="form-control" id="exampleFormControlInput1">
+				</div>
+			</div>
+		</div>
+
+		<label for="exampleFormControlInput1" class="form-label mt-5">Description: </label>
+
+		<div class="container">
+			<div class="row">
+				<div class="col-7">
+					<input @bind="@milk.Description" onkeypress="return /[a-z ]/i.test(event.key)" type="text" class="form-control mb-5" id="exampleFormControlInput1">
+				</div>
+			</div>
+		</div>
+	</form>
+</div>
+@code {
+	[Parameter]
+	public MilkType milk { get; set; }
+
+}

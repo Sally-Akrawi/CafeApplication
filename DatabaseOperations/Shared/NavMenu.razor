@@ -1,0 +1,109 @@
+﻿<div class="top-row ps-3 navbar navbar-dark">
+    
+    <div class="container-fluid">
+        <a class="navbar-brand" href="">DatabaseOperations</a>
+        <button title="Navigation menu" class="navbar-toggler" @onclick="ToggleNavMenu">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+    </div>
+</div>
+
+<div class="@NavMenuCssClass" @onclick="ToggleNavMenu">
+    <nav class="flex-column">
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
+                <span  aria-hidden="true"></span> Milk Menu
+            </NavLink>
+        </div>
+         <div class="nav-item px-3">
+            <NavLink class="nav-link" href="Food">
+                <span  aria-hidden="true"></span> Food Menu
+            </NavLink>
+        </div>
+ 
+          <div class="nav-item px-3">
+            <NavLink class="nav-link" href="Tea">
+                <span  aria-hidden="true"></span> Tea Menu
+            </NavLink>
+        </div>
+
+       
+          <div class="nav-item px-3">
+            <NavLink class="nav-link" href="Syrup">
+                <span  aria-hidden="true"></span> Syrup Menu
+            </NavLink>
+        </div>
+
+         <div class="nav-item px-3">
+            <NavLink class="nav-link" href="Sweetener">
+                <span  aria-hidden="true"></span> Sweetener Menu
+            </NavLink>
+        </div>
+
+         <div class="nav-item px-3">
+            <NavLink class="nav-link" href="Topping">
+                <span  aria-hidden="true"></span> Topping Menu
+            </NavLink>
+        </div>
+
+         <div class="nav-item px-3">
+            <NavLink class="nav-link" href="Drink">
+                <span  aria-hidden="true"></span> Drinks Menu
+            </NavLink>
+        </div>
+
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="cotumer">
+                <span  aria-hidden="true"></span> Milk UI
+            </NavLink>
+        </div>
+
+         <div class="nav-item px-3">
+            <NavLink class="nav-link" href="cotumerTea">
+                <span  aria-hidden="true"></span> Tea UI
+            </NavLink>
+        </div>
+
+           <div class="nav-item px-3">
+            <NavLink class="nav-link" href="cotumerFood">
+                <span  aria-hidden="true"></span> Food UI
+            </NavLink>
+        </div>
+
+         <div class="nav-item px-3">
+            <NavLink class="nav-link" href="cotumerSyrup">
+                <span  aria-hidden="true"></span> Syrup UI
+            </NavLink>
+        </div>
+
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="cotumerSweetener">
+                <span  aria-hidden="true"></span> Sweetener UI
+            </NavLink>
+        </div>
+
+         <div class="nav-item px-3">
+            <NavLink class="nav-link" href="cotumerTopping">
+                <span  aria-hidden="true"></span> Topping UI
+            </NavLink>
+        </div>
+
+         <div class="nav-item px-3">
+            <NavLink class="nav-link" href="cotumerDrink">
+                <span  aria-hidden="true"></span> Drinks UI
+            </NavLink>
+        </div>
+
+    </nav>
+</div>
+
+@code {
+    private bool collapseNavMenu = true;
+
+    private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
+
+    private void ToggleNavMenu()
+    {
+        collapseNavMenu = !collapseNavMenu;
+    }
+}

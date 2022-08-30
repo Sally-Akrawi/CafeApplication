@@ -1,0 +1,46 @@
+﻿@page "/cotumerSweetener"
+@inject IDataService SweetenerType
+
+
+
+<h2 class="text-center mt-3 mb-5" style="font-family:'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif; color:darkblue"><b>Sweetener Menu</b></h2>
+<div class="container-fluid" style="width: 50rem;">
+	<h6>Click on the sweetener's name to see more detials</h6>
+	<div class="list-group-item list-group-item-action  mt-5">
+		@foreach (var Item in sweetener)
+		{
+			<a @onclick="()=>ShowInfo(Item.Id)" class="list-group-item list-group-item-action">
+				@Item.SweetenerName
+			</a>
+		}
+	</div>
+</div>
+<div class="container-fluid" style="width: 50rem;">
+	<div class="card mt-5 " style="width: 18rem;">
+		<div class="card-body">
+			<h5 class="card-title"><b>Sweetener Details:</b> </h5>
+
+
+			<p><b>Sweetener Name: </b>@NewSweet.SweetenerName</p>
+			<p><b>Price: </b>@NewSweet.SweetenerPrice</p>
+			<p><b>Description: </b>@NewSweet.SweetenerDescription</p>
+		</div>
+	</div>
+</div>
+
+@code {
+	List<SweetenerMenu> sweetener = new List<SweetenerMenu>();
+	SweetenerMenu NewSweet = new SweetenerMenu();
+
+	protected override async Task OnInitializedAsync()
+	{
+
+		sweetener  = await SweetenerType.ReadDisableSweetener();
+	}
+
+	public async Task ShowInfo(int Id)
+	{
+		NewSweet = await SweetenerType.CustomerSweetenerDetails(Id);
+
+	}
+}

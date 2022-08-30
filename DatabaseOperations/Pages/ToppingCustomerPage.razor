@@ -1,0 +1,46 @@
+﻿@page "/cotumerTopping"
+@inject IDataService ToppingType
+
+
+
+<h2 class="text-center mt-3 mb-5" style="font-family:'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif; color:darkblue"><b>Topping Menu</b></h2>
+<div class="container-fluid" style="width: 50rem;">
+	<h6>Click on the topping's name to see more detials</h6>
+	<div class="list-group-item list-group-item-action  mt-5">
+		@foreach (var Item in Topper)
+		{
+			<a @onclick="()=>ShowInfo(Item.Id)" class="list-group-item list-group-item-action">
+				@Item.ToppingName
+			</a>
+		}
+	</div>
+</div>
+<div class="container-fluid" style="width: 50rem;">
+	<div class="card mt-5 " style="width: 18rem;">
+		<div class="card-body">
+			<h5 class="card-title"><b>Topping Details:</b> </h5>
+
+
+			<p><b>Topping Name: </b>@NewTopper.ToppingName</p>
+			<p><b>Price: </b>@NewTopper.ToppingPrice</p>
+			<p><b>Description: </b>@NewTopper.ToppingDescription</p>
+		</div>
+	</div>
+</div>
+
+@code {
+	List<ToppingMenu> Topper = new List<ToppingMenu>();
+	ToppingMenu NewTopper = new ToppingMenu();
+
+	protected override async Task OnInitializedAsync()
+	{
+
+		Topper = await ToppingType.ReadDisableTopping();
+	}
+
+	public async Task ShowInfo(int Id)
+	{
+		NewTopper = await ToppingType.CustomerToppingDetails(Id);
+
+	}
+}
